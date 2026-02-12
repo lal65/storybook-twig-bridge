@@ -1,0 +1,20 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Symfony in a Service Worker</title>
+</head>
+<body>
+  <h1>Symfony in a Service Worker</h1>
+  <pre id="status">Attempting to register service worker...</pre>
+
+  <script type="module">
+    navigator.serviceWorker.register('./dist/cgi-worker.js', { type: 'module', scope: '/app' }).then(() => {
+      document.getElementById('status').innerHTML = 'Service worker ready. <a href="/app/index.php">Open Symfony App</a>';
+    }).catch(e => {
+      document.getElementById('status').textContent = 'SW registration failed: ' + e;
+    });
+  </script>
+</body>
+</html>
