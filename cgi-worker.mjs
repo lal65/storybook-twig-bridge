@@ -25,7 +25,10 @@ async function bootPhp() {
   await php.runStream({
     code: `<?php
       $zip = new ZipArchive();
-      if ($zip->open('/app/app.zip', ZipArchive::RDONLY) === TRUE) {
+      $result = $zip->open('/app/app.zip', ZipArchive::RDONLY);
+      echo 'Trying to extract...<br>';
+      if ($result === TRUE) {
+      echo 'Able to open it<br>';
         $zip->extractTo('/app');
         $zip->close();
       }
@@ -77,12 +80,22 @@ self.addEventListener('fetch', (event) => {
       const php = await bootPhp();
       const run = await php.runStream({
         code: `<?php
-          $_SERVER['REQUEST_URI'] = '${url.pathname.replace('/app', '')}';
           $_SERVER['SCRIPT_FILENAME'] = '/app/public/index.php';
           require_once('/app/public/index.php');
-        `
+        `,
+        server: {
+          REQUEST_METHOD: 'GET',
+          SERVER_NAME: 'localhost',
+          SERVER_PORT: '8080',
+          SCRIPT_FILENAME: '/app/public/index.php',
+          SCRIPT_NAME: '/app/public/index.php',
+          DOCUMENT_ROOT: '/app/public',
+        }
       });
-      return new Response(await run.stdoutText, { status: 200, headers: await run.headers });
+
+      // Default Content-Type to text/html unless the script sets headers later (advanced: header capture)
+      const body = await run.stdoutText;
+      return new Response(body, { status: 200, headers: { 'Content-Type': 'text/html; charset=UTF-8' } });
     } catch (err) {
       return new Response('PHP runtime error: ' + err, { status: 500, headers: { 'Content-Type': 'text/plain' } });
     }
