@@ -77,7 +77,7 @@ self.addEventListener('fetch', (event) => {
       const php = await bootPhp();
       const run = await php.runStream({
         code: `<?php
-          $_SERVER['REQUEST_URI'] = '${url.pathname.replace('/app', '')}';
+          $_SERVER['REQUEST_URI'] = '${url.pathname.replace(/^.*\/app/, '')}';
           $_SERVER['SCRIPT_FILENAME'] = '/app/public/index.php';
           require_once('/app/public/index.php');
         `
