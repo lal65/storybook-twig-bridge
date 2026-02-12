@@ -53,17 +53,17 @@ jobs:
       - name: Generate build directory
         run: |
           mkdir artifact && \
+            mv *.wasm artifact && \
+            mv *.so artifact && \
+            mv cgi-worker.js artifact && \
             mv app/app.zip artifact && \
-            mv dist artifact && \
-            mv index.html artifact && \
-            ls -l . && \
-            ls -l artifact
-#      - name: Setup Pages
-#        uses: actions/configure-pages@v5
-#      - name: Upload artifact
-#        uses: actions/upload-pages-artifact@v4
-#        with:
-#          path: './artifact'
-#      - name: Deploy to GitHub Pages
-#        id: deployment
-#        uses: actions/deploy-pages@v4
+            mv index.html artifact
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: './artifact'
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

@@ -2,7 +2,7 @@ const esbuild = require('esbuild');
 
 esbuild.build({
   entryPoints: ['cgi-worker.mjs'],
-  outfile: 'dist/cgi-worker.js',
+  outfile: 'cgi-worker.js',
   bundle: true,
   format: 'esm',
   platform: 'browser',
@@ -19,4 +19,4 @@ esbuild.build({
   legalComments: 'none',
   define: { 'process.env.NODE_ENV': '"production"' },
 });
-console.log('Bundled Service Worker → dist/cgi-worker.js');
+console.log('Bundled Service Worker → cgi-worker.js');

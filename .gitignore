@@ -1,6 +1,9 @@
 .idea
 node_modules
-dist
 app/bin
 app/var
 app/vendor
+cgi-worker.js
+*.wasm
+*.so
+*.zip

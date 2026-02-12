@@ -40,7 +40,7 @@ async function bootPhp() {
 
 // --- Helpers ---
 const RESERVED_PREFIXES = new Set([
-  '/vendor', '/php-wasm', '/cgi-worker.js', '/dist', '/favicon.ico', '/robots.txt'
+  '/vendor', '/php-wasm', '/cgi-worker.js', '/favicon.ico', '/robots.txt'
 ]);
 
 function isStaticAsset(pathname) {

@@ -5,7 +5,7 @@ const mime = require('mime-types');
 const server = http.createServer((req, res) => {
   const path = (new URL(req.url, `http://${req.headers.host}/`)).pathname;
   res.setHeader('Content-Type', 'text/html');
-  res.setHeader('Service-Worker-Allowed', '/app');
+//  res.setHeader('Service-Worker-Allowed', '/');
   const contentType = mime.lookup(req.url);
   if (contentType) {
     res.setHeader('Content-Type', contentType);
