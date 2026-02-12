@@ -11,7 +11,7 @@
 
   <script type="module">
     navigator.serviceWorker.register('./cgi-worker.js', { type: 'module', scope: '/storybook-twig-bridge/app' }).then(() => {
-      document.getElementById('status').innerHTML = 'Service worker ready. <a href="/app/index.php">Open Symfony App</a>';
+      document.getElementById('status').innerHTML = 'Service worker ready. <a href="/storybook-twig-bridge/app">Open Symfony App</a>';
     }).catch(e => {
       document.getElementById('status').textContent = 'SW registration failed: ' + e;
     });
