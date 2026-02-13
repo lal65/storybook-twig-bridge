@@ -1,6 +1,6 @@
 {
-  "name": "php-wasm-sw-a-bundled-v2",
-  "version": "1.0.3",
+  "name": "@psu-online-education/storybook-twig-bridge",
+  "version": "1.0.0",
   "private": true,
   "type": "module",
   "scripts": {

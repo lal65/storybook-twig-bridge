@@ -2,21 +2,16 @@ const esbuild = require('esbuild');
 
 esbuild.build({
   entryPoints: ['cgi-worker.mjs'],
-  outfile: 'cgi-worker.js',
+  outfile: 'sw/cgi-worker.js',
   bundle: true,
   format: 'esm',
   platform: 'browser',
-  target: ['es2022'],
+  target: ['esnext'],
   external: ['events', 'worker_threads'],
-  // Prefer browser-friendly fields when resolving package entries
-  mainFields: ['browser', 'module', 'main'],
-  conditions: ['browser', 'import', 'default'],
   loader: {
     '.wasm': 'file',
     '.so':   'file'
   },
-  sourcemap: false,
-  legalComments: 'none',
-  define: { 'process.env.NODE_ENV': '"production"' },
+  minify: true,
 });
-console.log('Bundled Service Worker → cgi-worker.js');
+console.log('Bundled service worker to sw/cgi-worker.js');
