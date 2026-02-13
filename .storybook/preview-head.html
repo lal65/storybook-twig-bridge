@@ -1,0 +1,25 @@
+<link rel="preload" as="style" href="https://p.typekit.net/p.css?s=1&k=llt5zza&ht=tk&f=139.140.169.173.174.175.176.11005.11006.11007&a=36957641&app=typekit&e=css">
+<link href="https://use.typekit.net/llt5zza.css" rel="stylesheet">
+
+<style>
+  html {
+    background: initial !important;
+  }
+  body.sb-show-main {
+    transition: none !important;
+    background: var(--white) !important;
+  }
+
+  body.sb-show-main[data-dark] {
+    background: var(--nittany-navy) !important;
+  }
+</style>
+
+<script>
+  navigator.serviceWorker.register('./cgi-worker.js', {
+    type: 'module',
+    scope: window.location.pathname
+  })
+  .then(registration => console.debug('ServiceWorker registration successful with scope: ' + registration.scope))
+  .catch(error => console.error('ServiceWorker registration failed: ', error));
+</script>

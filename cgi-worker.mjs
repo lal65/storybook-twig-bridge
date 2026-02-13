@@ -1,90 +1,116 @@
 const { PHP, loadPHPRuntime } = require('./node_modules/@php-wasm/universal/index.js');
 const { getPHPLoaderModule } = require('./node_modules/@php-wasm/web-8-4/index.js');
 
-let php;
+/**
+ * A cached copy of the PHP runtime.
+ */
+let runtime = null;
 
-// --- Boot the PHP runtime once ---
-self.addEventListener('install', (event) => { self.skipWaiting(); });
-self.addEventListener('activate', (event) => { event.waitUntil(self.clients.claim()); });
+/**
+ * Gets a PHP runtime with the symfony application installed within it.
+ *
+ * @returns {PHP}
+ */
+async function getRuntime() {
 
-async function bootPhp() {
-  if (php) return php;
-  if (!getPHPLoaderModule || !loadPHPRuntime || !PHP) {
-    throw new Error('Failed to import @php-wasm modules.');
+  // The Symfony application to install is roughly 3mb compressed, so this
+  // setup is a fairly hefty operation when we're looking to achieve minimal
+  // latency for updating stories.  The runtime is cached for the current
+  // navigation and should be recycled across various AJAX requests to the
+  // server for re-rendering stories.
+  if (!runtime) {
+
+    runtime = new PHP(await loadPHPRuntime(await getPHPLoaderModule()));
+
+    // The Symfony application is going to live at /app within the runtime.
+    await runtime.mkdir('/app');
+
+    // Fetch the archive from the static file at the static site root.
+    const response = await fetch('app.zip');
+
+    // Write the archive into the runtime under /app.
+    await runtime.writeFile(
+      '/app/app.zip',
+      new Uint8Array(await response.arrayBuffer())
+    );
+
+    // Extract the archive into /app.
+    await runtime.runStream({
+      code: `<?php
+        $zip = new ZipArchive();
+        if ($zip->open('/app/app.zip', ZipArchive::RDONLY) === TRUE) {
+          $zip->extractTo('/app');
+          $zip->close();
+        }`
+    })
   }
-  const loaderModule = await getPHPLoaderModule();
-  const runtimeId = await loadPHPRuntime(loaderModule);
-  php = new PHP(runtimeId);
 
-  await php.mkdir('/app');
-
-  const response = await fetch('app.zip');
-  const app = await response.arrayBuffer();
-  await php.writeFile('/app/app.zip', new Uint8Array(app));
-
-  await php.runStream({
-    code: `<?php
-      $zip = new ZipArchive();
-      if ($zip->open('/app/app.zip', ZipArchive::RDONLY) === TRUE) {
-        $zip->extractTo('/app');
-        $zip->close();
-      }
-      `
-  })
-
-  return php;
+  return runtime;
 }
 
-// --- Helpers ---
-const RESERVED_PREFIXES = new Set([
-  '/vendor', '/php-wasm', '/cgi-worker.js', '/favicon.ico', '/robots.txt'
-]);
+// Immediately activate this service worker.
+self.addEventListener('install', () => {
+  self.skipWaiting();
+});
 
-function isStaticAsset(pathname) {
-  // Treat any last-segment containing a dot as a static file: /img/logo.svg, /app.js, /styles/site.css
-  const seg = pathname.split('/').pop() || '';
-  return seg.includes('.');
-}
+// Immediately claim as to not require a page refresh.
+self.addEventListener('activate', event => {
+  event.waitUntil(self.clients.claim());
+});
 
+// Finally, respond to all fetch events in scope.
+self.addEventListener('fetch', event => {
 
-
-// --- Fetch handler with rewrites ---
-self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
 
-  // Allow the raw-source bypass
-  if (url.searchParams.has('__src')) {
+  // This service worker has to be broadly scoped in order to deal with the
+  // nature of Storybook's iframe.  As such, given this intercepts all requests
+  // to the entire application, it becomes necessary to take the ones we
+  // actually care about handling.  This might be a little fragile, but in all
+  // honestly, it's probably okay given the VERY limited scope of the worker.
+  if (!url.pathname.includes('/app/')) {
     return;
   }
 
-  // Ignore our own runtime assets and obvious non-app paths
-  for (const prefix of RESERVED_PREFIXES) {
-    if (url.pathname === prefix || url.pathname.startsWith(prefix + '/')) {
-      return; // let default network fetch handle it
-    }
-  }
+  // Enter the world's dumbest CGI.  As far as Symfony is concerned, its root
+  // is located at /app, so the for the REQUEST_URI, we'll strip the leading
+  // content all the way up to, and including, /app.
+  //
+  // For example, the full pathname from the browser's perspective could be
+  // something like "/storybook-twig-bridge/app/twig/heading", but the part
+  // that matters to the Symfony routing is only "/twig/heading".
+  const request_uri = url.pathname.replace(/^.*\/app/, '');
 
-  // 1) Direct PHP file under /app → run as-is (no rewrite)
-  const isDirectPhp = url.pathname.startsWith('/app/') && url.pathname.endsWith('.php');
+  // Query strings are a direct pass-through.
+  const query_string = url.search;
 
-  // 2) Static assets (any dot in last segment) → pass through
-  if (!isDirectPhp && isStaticAsset(url.pathname)) {
-    return; // don't intercept; let network serve the file
-  }
+  // The PHP runtime has the Symfony application copied to the /app directory,
+  // so the Symfony front controller is always relative to that.
+  const script_filename = '/app/public/index.php';
 
+  // Finally respond to the event by feeding the request to the underlying
+  // Symfony application.  The request to the underlying application should
+  // always return a text/HTML response.
   event.respondWith((async () => {
-    try {
-      const php = await bootPhp();
-      const run = await php.runStream({
+      const runtime = await getRuntime();
+      const response = await runtime.runStream({
         code: `<?php
-          $_SERVER['REQUEST_URI'] = '${url.pathname.replace(/^.*\/app/, '')}';
-          $_SERVER['SCRIPT_FILENAME'] = '/app/public/index.php';
-          require_once('/app/public/index.php');
-        `
+          // Manually populate minimum required super-globals.
+          $_SERVER['REQUEST_URI'] = '${request_uri}';
+          $_SERVER['QUERY_STRING'] = '${query_string}';
+          $_SERVER['SCRIPT_FILENAME'] = '${script_filename}';
+
+          // Extract $_SERVER['QUERY_STRING'] into $_GET.
+          if (empty($_GET) && !empty($_SERVER['QUERY_STRING'])) {
+            parse_str($_SERVER['QUERY_STRING'], $_GET);
+          }
+
+          // Pass things off to the Symfony front controller.
+          require_once('/app/public/index.php');`
       });
-      return new Response(await run.stdoutText, { status: 200, headers: await run.headers });
-    } catch (err) {
-      return new Response('PHP runtime error: ' + err, { status: 500, headers: { 'Content-Type': 'text/plain' } });
-    }
+      return new Response(await response.stdoutText, {
+        status: await response.httpStatusCode,
+        headers: await response.headers,
+      });
   })());
 });

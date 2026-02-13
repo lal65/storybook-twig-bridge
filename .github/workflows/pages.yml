@@ -35,35 +35,50 @@ jobs:
         uses: shivammathur/setup-php@v2
         with:
           php-version: 8.4
-      - name: Install dependencies
+      - name: Install Symfony dependencies
         uses: ramsey/composer-install@v3
         with:
           dependency-versions: locked
           working-directory: app
-      - uses: actions/setup-node@v6
+      - name: Install design system components
+        uses: actions/setup-node@v6
         with:
           node-version: '24.x'
           registry-url: 'https://npm.pkg.github.com'
-      - run: npm install
+        run: cd app && npm install
+        env:
+          NODE_AUTH_TOKEN: ${{secrets.GITHUB_TOKEN}}
+      - name: Install WASM + Storybook
+        uses: actions/setup-node@v6
+        with:
+          node-version: '24.x'
+          registry-url: 'https://npm.pkg.github.com'
+        run: npm install
         env:
           NODE_AUTH_TOKEN: ${{secrets.GITHUB_TOKEN}}
       - run: npm run build
       - name: Zip up the symfony application
         run: cd app && zip -r app.zip .
-      - name: Generate build directory
+      - name: Build service worker asset directory
         run: |
-          mkdir artifact && \
-            mv *.wasm artifact && \
-            mv *.so artifact && \
-            mv cgi-worker.js artifact && \
-            mv app/app.zip artifact && \
-            mv index.html artifact
-      - name: Setup Pages
-        uses: actions/configure-pages@v5
-      - name: Upload artifact
-        uses: actions/upload-pages-artifact@v4
+          mkdir sw && \
+            mv *.wasm sw && \
+            mv *.so sw && \
+            mv cgi-worker.js sw && \
+            mv app/app.zip sw && \
+            mv index.html sw
+      - name: Build static storybook site
+        uses: actions/setup-node@v6
         with:
-          path: './artifact'
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
+          node-version: '24.x'
+          registry-url: 'https://npm.pkg.github.com'
+        run: npm run build-storybook
+#      - name: Setup Pages
+#        uses: actions/configure-pages@v5
+#      - name: Upload artifact
+#        uses: actions/upload-pages-artifact@v4
+#        with:
+#          path: './storybook-static'
+#      - name: Deploy to GitHub Pages
+#        id: deployment
+#        uses: actions/deploy-pages@v4

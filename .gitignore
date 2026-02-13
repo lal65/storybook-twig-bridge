@@ -7,3 +7,5 @@ cgi-worker.js
 *.wasm
 *.so
 *.zip
+*storybook.log
+storybook-static

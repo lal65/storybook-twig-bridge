@@ -1,0 +1,16 @@
+import { Meta } from "@storybook/addon-docs/blocks";
+
+<Meta title="Twig Bridge Demo" />
+# Storybook Twig Bridge Demo
+👋 Welcome to the demo.  This project showcases a more direct integration of
+Twig into Storybook.
+
+## How does it work?
+A light-weight Symfony application is installed in a Service Worker and runs
+within a PHP 8.4 web assembly runtime 🤓. A simple controller takes a pattern
+ID and query parameters from Storybook requests and passes them through to the
+appropriate twig template for rendering.
+
+Unlike alternatives in this space, this
+demo uses the official bleeding edge of Twig and is guaranteed to stay up to
+date with the main product.

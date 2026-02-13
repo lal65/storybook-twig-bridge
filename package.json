@@ -4,14 +4,19 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "python3 -m http.server 8080",
-    "serve": "node serve.cjs",
-    "build": "node bundle-sw.cjs"
+    "build": "node bundle-sw.cjs",
+    "storybook": "storybook dev -p 8080",
+    "build-storybook": "storybook build"
   },
   "dependencies": {
+    "esbuild": "^0.27.3",
+    "mime-types": "^3.0.2",
     "@php-wasm/universal": "latest",
     "@php-wasm/web-8-4": "latest",
-    "esbuild": "^0.27.3",
-    "mime-types": "^3.0.2"
+    "@storybook/addon-a11y": "^10.2.8",
+    "@storybook/addon-docs": "^10.2.8",
+    "@storybook/addon-webpack5-compiler-swc": "^4.0.2",
+    "@storybook/server-webpack5": "^10.2.8",
+    "storybook": "^10.2.8"
   }
 }
