@@ -56,14 +56,7 @@ jobs:
       - name: Build the service worker
         run: npm run build
       - name: Zip up the symfony application
-        run: cd app && zip -r app.zip .
-      - name: Build service worker asset directory
-        run: |
-          mv *.wasm sw && \
-            mv *.so sw && \
-            mv cgi-worker.js sw && \
-            mv app/app.zip sw && \
-            mv index.html sw
+        run: cd app && zip -r app.zip . && mv app.zip ../sw
       - name: Build static storybook site
         run: npm run build-storybook
       - name: Setup Pages
