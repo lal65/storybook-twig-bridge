@@ -40,23 +40,21 @@ jobs:
         with:
           dependency-versions: locked
           working-directory: app
-      - name: Install design system components
+      - name: Set up NodeJS
         uses: actions/setup-node@v6
         with:
           node-version: '24.x'
           registry-url: 'https://npm.pkg.github.com'
-        run: cd app && npm install
-        env:
-          NODE_AUTH_TOKEN: ${{secrets.GITHUB_TOKEN}}
       - name: Install WASM + Storybook
-        uses: actions/setup-node@v6
-        with:
-          node-version: '24.x'
-          registry-url: 'https://npm.pkg.github.com'
         run: npm install
         env:
           NODE_AUTH_TOKEN: ${{secrets.GITHUB_TOKEN}}
-      - run: npm run build
+      - name: Install design system components
+        run: cd app && npm install
+        env:
+          NODE_AUTH_TOKEN: ${{secrets.GITHUB_TOKEN}}
+      - name: Build the service worker
+        run: npm run build
       - name: Zip up the symfony application
         run: cd app && zip -r app.zip .
       - name: Build service worker asset directory
@@ -68,11 +66,9 @@ jobs:
             mv app/app.zip sw && \
             mv index.html sw
       - name: Build static storybook site
-        uses: actions/setup-node@v6
-        with:
-          node-version: '24.x'
-          registry-url: 'https://npm.pkg.github.com'
         run: npm run build-storybook
+      - name: Debug output
+        run: ls -lah storybook-static
 #      - name: Setup Pages
 #        uses: actions/configure-pages@v5
 #      - name: Upload artifact
