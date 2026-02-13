@@ -26,6 +26,9 @@ npm run watch
 ```
 This will bundle everything necessary to run storybook and start on port 8080.
 
+### Customize Storybook
+This is just a plain storybook instance; all customization points work!
+
 ## Static Site Build
 ```bash
 npm run build
