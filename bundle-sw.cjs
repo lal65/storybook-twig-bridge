@@ -14,4 +14,11 @@ esbuild.build({
   },
   minify: true,
 });
+
 console.log('Bundled service worker to sw/cgi-worker.js');
+
+const AdmZip = require("adm-zip");
+const archive = new AdmZip();
+archive.addLocalFolder('app');
+archive.writeZip('sw/app.zip');
+console.log('Bundled symfony app to sw/app.zip');

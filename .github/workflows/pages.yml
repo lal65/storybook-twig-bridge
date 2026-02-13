@@ -45,26 +45,22 @@ jobs:
         with:
           node-version: '24.x'
           registry-url: 'https://npm.pkg.github.com'
-      - name: Install WASM + Storybook
-        run: npm install
-        env:
-          NODE_AUTH_TOKEN: ${{secrets.GITHUB_TOKEN}}
       - name: Install design system components
         run: cd app && npm install
         env:
           NODE_AUTH_TOKEN: ${{secrets.GITHUB_TOKEN}}
-      - name: Build the service worker
+      - name: Build the service worker and storybook
         run: npm run build
-      - name: Zip up the symfony application
-        run: cd app && zip -r app.zip . && mv app.zip ../sw
-      - name: Build static storybook site
-        run: npm run build-storybook
-      - name: Setup Pages
-        uses: actions/configure-pages@v5
-      - name: Upload artifact
-        uses: actions/upload-pages-artifact@v4
-        with:
-          path: './storybook-static'
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
+        env:
+          NODE_AUTH_TOKEN: ${{secrets.GITHUB_TOKEN}}
+      - name: Debug (temp)
+        run: ls -lah storybook-static
+#      - name: Setup Pages
+#        uses: actions/configure-pages@v5
+#      - name: Upload artifact
+#        uses: actions/upload-pages-artifact@v4
+#        with:
+#          path: './storybook-static'
+#      - name: Deploy to GitHub Pages
+#        id: deployment
+#        uses: actions/deploy-pages@v4
